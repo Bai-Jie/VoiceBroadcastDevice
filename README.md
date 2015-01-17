@@ -1,6 +1,8 @@
 语音播报器
 ================
 
+[![Build Status](https://travis-ci.org/Bai-Jie/VoiceBroadcastDevice.svg?branch=master)](https://travis-ci.org/Bai-Jie/VoiceBroadcastDevice)
+
 功能
 -------------
 
@@ -25,7 +27,7 @@ Build
 LICENSE
 -------------
 
-    Copyright 2014 Bai Jie
+    Copyright 2015 Bai Jie
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
