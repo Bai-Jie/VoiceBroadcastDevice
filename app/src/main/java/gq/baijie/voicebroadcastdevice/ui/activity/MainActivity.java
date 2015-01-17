@@ -1,5 +1,7 @@
 package gq.baijie.voicebroadcastdevice.ui.activity;
 
+import com.umeng.update.UmengUpdateAgent;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -13,6 +15,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //友盟自动更新
+        UmengUpdateAgent.update(this);
+
         setContentView(R.layout.activity_main);
     }
 

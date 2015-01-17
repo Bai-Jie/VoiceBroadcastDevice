@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
     }
 
     signingConfigs {
@@ -34,6 +34,13 @@ android {
     // read local.properties
     Properties localProperties = new Properties()
     localProperties.load(project.rootProject.file('local.properties').newReader('UTF-8'))
+    // set string resources according to local.properties
+    try {
+        addStringResSetInProperties('umeng_app_key', localProperties, 'umeng.appKey')
+    } catch (ResourceException re) {
+        String message = "Please set $re.propertyName in local.properties file at root project"
+        throw new ResourceException(re.propertyName, message, re)
+    }
     // set release signing config
     if (shouldSetReleaseSigningConfig(localProperties)) {
         // initialize release signingConfig
@@ -63,6 +70,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.umeng.update:library:2.4.2'
 }
 
 
@@ -224,5 +232,39 @@ def getPasswordReader() {
             } // edt end
             return pass
         }
+    }
+}
+
+/**
+ * 把properties里设置的propertyName属性的值，添加为Android项目的string resource：R.string.${name}
+ *
+ * @param name Android项目string resource的name
+ */
+void addStringResSetInProperties(String name, Properties properties, String propertyName) {
+    final String value = properties.getProperty(propertyName)
+    if (value == null) {
+        throw new ResourceException(propertyName)
+    }
+    android.applicationVariants.all { variant ->
+        variant.resValue('string', name, value)
+    }
+}
+
+class ResourceException extends org.gradle.api.resources.ResourceException {
+
+    final String propertyName;
+
+    ResourceException(String propertyName) {
+        this.propertyName = propertyName
+    }
+
+    ResourceException(String propertyName, String message) {
+        super(message)
+        this.propertyName = propertyName
+    }
+
+    ResourceException(String propertyName, String message, Throwable cause) {
+        super(message, cause)
+        this.propertyName = propertyName
     }
 }
