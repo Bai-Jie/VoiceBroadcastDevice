@@ -1,0 +1,64 @@
+#
+# generated on 2015/01/19 06:43:20
+#
+# --table-start--
+dataClass=gq.baijie.voicebroadcastdevice.entity.Category
+tableName=category
+# --table-fields-start--
+# --field-start--
+fieldName=mId
+columnName=_id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=mName
+columnName=name
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=gq.baijie.voicebroadcastdevice.entity.Sound
+tableName=sound
+# --table-fields-start--
+# --field-start--
+fieldName=mId
+columnName=_id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=mTitle
+columnName=title
+canBeNull=false
+# --field-end--
+# --field-start--
+fieldName=mFileName
+columnName=file_name
+canBeNull=false
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=gq.baijie.voicebroadcastdevice.entity.SoundCategory
+tableName=sound_category
+# --table-fields-start--
+# --field-start--
+fieldName=mSound
+columnName=sound_id
+foreign=true
+columnDefinition=INTEGER REFERENCES sound(_id) ON DELETE CASCADE ON UPDATE CASCADE
+# --field-end--
+# --field-start--
+fieldName=mCategory
+columnName=category_id
+foreign=true
+columnDefinition=INTEGER REFERENCES category(_id) ON DELETE CASCADE ON UPDATE CASCADE
+# --field-end--
+# --field-start--
+fieldName=mOrderInCategory
+columnName=order_in_category
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
