@@ -107,14 +107,14 @@ public class AddItemActivity extends OrmLiteBaseActivity<DatabaseHelper> {
             mPlayer.release();
             mPlayer = null;
         }
+        if (mFileName.exists()) {
+            save();//TODO delete
+        }
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        if (mFileName.exists()) {
-            save();
-        }
         if (mPlayer != null) {
             mPlayer.release();
             mPlayer = null;
