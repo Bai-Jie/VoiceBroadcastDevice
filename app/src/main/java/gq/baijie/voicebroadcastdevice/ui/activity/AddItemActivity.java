@@ -98,15 +98,6 @@ public class AddItemActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 
     @Override
     public void onPause() {
-        if (mRecorder != null) {
-            mRecorder.release();
-            mRecorder = null;
-        }
-
-        if (mPlayer != null) {
-            mPlayer.release();
-            mPlayer = null;
-        }
         if (mFileName.exists()) {
             save();//TODO delete
         }
@@ -115,6 +106,10 @@ public class AddItemActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 
     @Override
     protected void onStop() {
+        if (mRecorder != null) {
+            mRecorder.release();
+            mRecorder = null;
+        }
         if (mPlayer != null) {
             mPlayer.release();
             mPlayer = null;

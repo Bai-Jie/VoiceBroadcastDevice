@@ -7,6 +7,7 @@ import com.j256.ormlite.dao.RawRowMapper;
 import com.umeng.update.UmengUpdateAgent;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,8 @@ import static gq.baijie.voicebroadcastdevice.storage.database.Contract.SoundCate
 
 public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
+
     // select s.id, s.title, s.filename from sound, category, sc
     // where c.name = 'Default' and sc.cid = c.id and sc.sid=s.id
     // order by sc.order
@@ -52,6 +56,8 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
                               + PATH_SOUND_CATEGORY + "." + COLUMN_SOUND_ID;
 
     private List<Sound> mSounds;
+
+    private MediaPlayer mPlayer;
 
     private SoundsAdapter mAdapter;
 
@@ -80,6 +86,16 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     protected void onStart() {
         super.onStart();
         loadSounds();
+        mPlayer = new MediaPlayer();
+    }
+
+    @Override
+    protected void onStop() {
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
+        }
+        super.onStop();
     }
 
     @Override
@@ -117,6 +133,10 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     // New Declared Methods
     //--------------------------------------------------------------------------
 
+    private String getFileStreamAbsolutePath(String fileName) {
+        return getFileStreamPath(fileName).getAbsolutePath();
+    }
+
     private boolean soundsIsEmpty() {
         return mSounds == null || mSounds.isEmpty();
     }
@@ -139,9 +159,27 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
             List<Sound> sounds = soundGenericRawResults.getResults();
             sounds = new ArrayList<>(sounds);
             mSounds = sounds;
-            mAdapter.notifyDataSetChanged();
+            if (mAdapter != null) {
+                mAdapter.notifyDataSetChanged();
+            }
         } catch (SQLException e) {
             e.printStackTrace();//TODO
+        }
+    }
+
+    private boolean startPlay(String path) {
+        if (mPlayer == null) {
+            return false;
+        }
+        mPlayer.reset();
+        try {
+            mPlayer.setDataSource(path);
+            mPlayer.prepare();
+            mPlayer.start();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -158,8 +196,14 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
+        public void onBindViewHolder(ViewHolder holder, final int position) {
             holder.mTitleTextView.setText(mSounds.get(position).getTitle());
+            holder.mItemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startPlay(getFileStreamAbsolutePath(mSounds.get(position).getFileName()));
+                }
+            });
         }
 
         @Override
