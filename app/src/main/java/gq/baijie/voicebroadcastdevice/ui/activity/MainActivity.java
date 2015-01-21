@@ -1,5 +1,7 @@
 package gq.baijie.voicebroadcastdevice.ui.activity;
 
+import com.bignerdranch.android.multiselector.MultiSelector;
+import com.bignerdranch.android.multiselector.SwappingHolder;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.GenericRawResults;
@@ -11,6 +13,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +24,7 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import gq.baijie.voicebroadcastdevice.R;
@@ -57,11 +61,58 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 
     private List<Sound> mSounds;
 
+    private MultiSelector mMultiSelector = new MultiSelector();
+
     private MediaPlayer mPlayer;
 
     private SoundsAdapter mAdapter;
 
     private RecyclerView mRecyclerView;
+
+    private ActionMode mActionMode;
+
+    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.context_menu_main, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            mMultiSelector.setSelectable(true);
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.action_delete:
+                    deleteSelectedSounds();
+                    mode.finish();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            mMultiSelector.clearSelections();
+            mMultiSelector.setSelectable(false);
+            mActionMode = null;
+        }
+
+        private void deleteSelectedSounds() {
+            List<Sound> sounds = new LinkedList<Sound>();
+            for (int position : mMultiSelector.getSelectedPositions()) {
+                sounds.add(mSounds.get(position));
+            }
+            for (Sound sound : sounds) {
+                deleteSound(sound);
+            }
+        }
+    };
 
     //--------------------------------------------------------------------------
     // Override Methods of Activity
@@ -124,6 +175,11 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
             case R.id.action_add:
                 startActivity(new Intent(this, AddItemActivity.class));
                 return true;
+            case R.id.action_edit:
+                if (mActionMode == null) {
+                    mActionMode = startActionMode(mActionModeCallback);
+                }
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -167,6 +223,21 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         }
     }
 
+    private void deleteSound(Sound sound) {
+        try {
+            Dao<Sound, Long> soundDao = getHelper().getSoundDao();
+            soundDao.delete(sound);
+            getFileStreamPath(sound.getFileName()).delete();
+            int position = mSounds.indexOf(sound);
+            mSounds.remove(sound);//TODO check result
+            if (mAdapter != null) {
+                mAdapter.notifyItemRemoved(position);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();//TODO
+        }
+    }
+
     private boolean startPlay(String path) {
         if (mPlayer == null) {
             return false;
@@ -187,23 +258,17 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     // Nested Classes
     //--------------------------------------------------------------------------
 
-    private class SoundsAdapter extends RecyclerView.Adapter<ViewHolder> {
+    private class SoundsAdapter extends RecyclerView.Adapter<SoundViewHolder> {
 
         @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public SoundViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            return new ViewHolder(inflater.inflate(R.layout.list_item_sound, parent, false));
+            return new SoundViewHolder(inflater.inflate(R.layout.list_item_sound, parent, false));
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, final int position) {
-            holder.mTitleTextView.setText(mSounds.get(position).getTitle());
-            holder.mItemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startPlay(getFileStreamAbsolutePath(mSounds.get(position).getFileName()));
-                }
-            });
+        public void onBindViewHolder(SoundViewHolder holder, final int position) {
+            holder.bindSound(mSounds.get(position));
         }
 
         @Override
@@ -216,16 +281,53 @@ public class MainActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         }
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class SoundViewHolder extends SwappingHolder
+            implements View.OnClickListener, View.OnLongClickListener {
 
-        public View mItemView;
+        private Sound mSound;
 
-        public TextView mTitleTextView;
+        private TextView mTitleTextView;
 
-        public ViewHolder(View itemView) {
-            super(itemView);
-            mItemView = itemView;
+        public SoundViewHolder(View itemView) {
+            super(itemView, mMultiSelector);
             mTitleTextView = (TextView) itemView.findViewById(R.id.title);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+            itemView.setLongClickable(true);
+            setSelectionModeBackgroundDrawable(
+                    getResources().getDrawable(R.drawable.activatable_item_background));
+        }
+
+        public void bindSound(Sound sound) {
+            mSound = sound;
+            mTitleTextView.setText(sound != null ? sound.getTitle() : "");
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mSound == null) {
+                return;
+            }
+            if (mMultiSelector.tapSelection(this)) {
+                int selectionsSize = mMultiSelector.getSelectedPositions().size();
+                mActionMode.setTitle(String.valueOf(selectionsSize));
+                if (selectionsSize == 0) {
+                    mActionMode.finish();
+                }
+            } else { //isn't Selectable
+                startPlay(getFileStreamAbsolutePath(mSound.getFileName()));
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            if (mActionMode == null) {
+                mActionMode = startActionMode(mActionModeCallback);
+                mMultiSelector.setSelected(this, true);
+                mActionMode.setTitle("1");
+                return true;
+            }
+            return false;
         }
     }
 

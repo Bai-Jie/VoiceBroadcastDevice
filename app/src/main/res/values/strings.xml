@@ -4,6 +4,8 @@
     <string name="app_name">VoiceBroadcastDevice</string>
     <string name="hello_world">Hello world!</string>
     <string name="add">Add</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
     <string name="title">Title</string>
     <string name="play">Play</string>
     <string name="record">Record</string>

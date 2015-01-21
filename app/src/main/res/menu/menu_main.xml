@@ -6,6 +6,10 @@
           android:title="@string/add"
           android:showAsAction="ifRoom"/>
 
+    <item android:id="@+id/action_edit"
+          android:title="@string/edit"
+          android:showAsAction="ifRoom"/>
+
     <item android:id="@+id/action_settings"
           android:title="@string/action_settings"
           android:orderInCategory="100"

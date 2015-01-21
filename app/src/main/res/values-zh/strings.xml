@@ -4,6 +4,8 @@
     <string name="app_name">语音播报器</string>
     <string name="hello_world">你好，世界！</string>
     <string name="add">添加</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
     <string name="title">标题</string>
     <string name="play">播放</string>
     <string name="record">录音</string>

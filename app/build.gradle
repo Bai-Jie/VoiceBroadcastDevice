@@ -74,6 +74,7 @@ dependencies {
     compile 'com.j256.ormlite:ormlite-android:4.48'
     compile 'com.j256.ormlite:ormlite-android:4.48'
     compile 'com.umeng.update:library:2.4.2'
+    compile 'com.bignerdranch.android:recyclerview-multiselect:0.1'
 }
 
 
